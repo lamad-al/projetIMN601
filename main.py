@@ -60,7 +60,8 @@ class Images:
 
         :param data_set: The type of data set ('training', 'validation' or 'test')
         :type data_set: str
-        :return:
+        :return: A list of all labels (real class of each image) for a given data set.
+        :rtype: list
         """
         # Check our input
         assert data_set in ('training', 'test')
@@ -86,6 +87,11 @@ class Images:
     #                                              Features
     ####################################################################################################################
     def gray_scale(self, all_img):
+        """Transform a list of images into a list of gray scale feature.
+
+        :param all_img: A data set returned by "keras.datasets"
+        :return: A list with one list of feature (gray scale) for every image.
+        """
         gs_data = []
         for img in all_img:
             new_img = []
@@ -104,36 +110,60 @@ class Images:
 
 
 ########################################################################################################################
-#                                             Algorithms
+#                                             Others
 ########################################################################################################################
 def create_confusion_matrix(predicted, real):
+    # TODO : Apparemment que Keras ou ScikitLearn possède une fonction pour ça. Faudrait s'en servir I guess.
     nb_of_class = len(set(real))
     matrix = np.zeros((nb_of_class, nb_of_class), dtype=np.int32)
     for it in range(len(real)):
         matrix[predicted[it]][real[it]] += 1
     return matrix
 
+
+def check_accuracy(predicted, real):
+    diff = predicted - real
+    return 100 * (diff == 0).sum() / np.float(len(real))
+
 ########################################################################################################################
 #                                               Main
 ########################################################################################################################
 if __name__ == '__main__':
-    images = Images(database=cifar10)
+    # TODO : Automatiser un peu plus le tout. Là il faut changer plusieurs paramètres et mots manuellement.
+    images = Images(database=mnist)
+
+    # Get the training data set with its labels
     X = images.get_data_set(data_set="training", feature="gray_scale")
     Y = images.get_labels(data_set="training")
 
-    ####################################################################################################################
-    #                                      Logistic regression
-    ####################################################################################################################
+    # Get the validation data set with its labels
+    V = images.get_data_set(data_set="validation", feature="gray_scale")
+    W = images.get_labels(data_set="validation")
 
+    # Get the parameters with Grid Search
+    # TODO : Faire une liste des paramètres à trouver et setter
+    # TODO : Implémenter un Grid Search (regarder si Keras en a pas un, ça serait trop nice...)
+
+    # Train the classifier
+    # TODO : Ajout d'un autre algorithme et d'un autre feature
+    # TODO : Utiliser nos paramètres trouvés par Grid Search
     classifier = SGDClassifier(loss='log', alpha=0.001, learning_rate='optimal', eta0=1, n_iter=1000)
-
-    # function fit() trains the model
     clf = classifier.fit(X, Y)
 
+    # Get the accuracy for the training data set
+    print('Logistic regression training accuracy = ', check_accuracy(clf.predict(X), Y), '%')
+
+    # Get the test data set with its labels
+    X = images.get_data_set(data_set="test", feature="gray_scale")
+    Y = images.get_labels(data_set="test")
+
+    # Get the accuracy for the test data set
+    print('Logistic regression test accuracy = ', check_accuracy(clf.predict(X), Y), '%')
+
+    # Print a confusion matrix
+    # TODO : Nécessaire?
     confusion_matrix = create_confusion_matrix(clf.predict(X), Y)
     print(confusion_matrix)
 
-    diff = clf.predict(X) - Y
-    trainingAccuracy = 100 * (diff == 0).sum() / np.float(len(Y))
-    print('Logistic regression training accuracy = ', trainingAccuracy, '%')
+
 
