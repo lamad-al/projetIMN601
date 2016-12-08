@@ -7,6 +7,7 @@ from math import ceil
 import abc
 
 
+# TODO : Mettre les classes dans des fichiers à part
 ########################################################################################################################
 #                                               Datasets
 ########################################################################################################################
@@ -250,48 +251,56 @@ class Images:
 #                                               Main
 ########################################################################################################################
 if __name__ == '__main__':
-    # Choose which databases to use for the simulation
+    # TODO : Automatiser les features
+    # Choose which databases to use
     datasets = (Mnist(), Cifar10(),)[0:2]
 
-    # Choose which classifier to use for the simulation
+    # Choose which classifier to use
     classifiers = (Sigmoid(),)[0:1]
+
+    # Choose which feature to use
+    features = ["raw_pixels", "gray_scale"]
 
     for dataset in datasets:
         images = Images(dataset, slice=0.1)
 
-        # Get the training data set with its labels
-        X = images.get_data_set(data_set="training", feature="raw_pixels")
-        Y = images.get_labels(data_set="training")
+        for feature in features:
+            # Get the training data set with its labels
+            X = images.get_data_set(data_set="training", feature=feature)
+            Y = images.get_labels(data_set="training")
 
-        # Get the validation data set with its labels
-        V = images.get_data_set(data_set="validation", feature="raw_pixels")
-        W = images.get_labels(data_set="validation")
+            # Get the validation data set with its labels
+            V = images.get_data_set(data_set="validation", feature=feature)
+            W = images.get_labels(data_set="validation")
 
-        for classifier in classifiers:
-            # Get the parameters with Grid Search
-            # TODO : Faire une liste des paramètres à trouver et setter
-            # TODO : Implémenter un Grid Search (regarder si Keras en a pas un, ça serait trop nice...)
+            for classifier in classifiers:
+                # Get the parameters with Grid Search
+                # TODO : Faire une liste des paramètres à trouver et setter
+                # TODO : Implémenter un Grid Search (regarder si Keras en a pas un, ça serait trop nice...)
 
-            # Train the classifier
-            # TODO : Ajout d'un autre algorithme et d'un autre feature
-            # TODO : Utiliser nos paramètres trouvés par Grid Search
-            clf = classifier.get_classifier().fit(X, Y)
+                # Train the classifier
+                # TODO : Ajout d'un autre algorithme et d'un autre feature
+                # TODO : Utiliser nos paramètres trouvés par Grid Search
+                clf = classifier.get_classifier().fit(X, Y)
 
-            # Get the accuracy for the training data set
-            print(classifier.get_name(), '\'s training accuracy for', dataset.get_name(), '= ',
-                  clf.score(X, Y) * 100, '%')
+                # Get the accuracy for the training data set
+                # TODO : Le message est horrible... Le rendre beau svp
+                print(classifier.get_name(), '\'s training accuracy for', dataset.get_name(),
+                      'with', feature, 'for feature = ',
+                      clf.score(X, Y) * 100, '%')
 
-            # Get the test data set with its labels
-            X = images.get_data_set(data_set="test", feature="raw_pixels")
-            Y = images.get_labels(data_set="test")
+                # Get the test data set with its labels
+                X = images.get_data_set(data_set="test", feature=feature)
+                Y = images.get_labels(data_set="test")
 
-            # Get the accuracy for the test data set
-            print(classifier.get_name(), '\'s test accuracy for', dataset.get_name(), '= ',
-                  clf.score(X, Y) * 100, '%')
+                # Get the accuracy for the test data set
+                print(classifier.get_name(), '\'s test accuracy for', dataset.get_name(),
+                      'with', feature, 'for feature = ',
+                      clf.score(X, Y) * 100, '%')
 
-            # Print a confusion matrix
-            cm = confusion_matrix(Y, clf.predict(X))
-            print(cm)
+                # Print a confusion matrix
+                cm = confusion_matrix(Y, clf.predict(X))
+                print(cm)
 
 
 
