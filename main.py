@@ -1,31 +1,48 @@
 from keras.datasets import mnist, cifar10
 from sklearn.linear_model import SGDClassifier
+from sklearn.metrics import confusion_matrix
 import numpy as np
+from math import ceil
 
 
 ########################################################################################################################
 #                                                Data
 ########################################################################################################################
 class Images:
-    def __init__(self, database=mnist):
-        # TODO : Ajouter le slice directement à l'initialisation
-        # TODO : Couper un % pour les données de validation plutôt qu'une valeur fixe (afin de s'adapter si on slice)
+    def __init__(self, database=mnist, slice=1):
         """Object used to facilitate the extraction of our data sets and features. Initialize with the database.
 
         :param database: The database we want to work with (mnist or cifar10)
+        :param slice: Number between ]0,1] which represents the % of data that we want for training. Default: 100%
+        :type slice: float
         """
-        # Fetching the data from "keras.datasets"
         assert database in (mnist, cifar10)
+        assert 0 < slice <= 1
+
+        # Fetching the data from "keras.datasets"
         (self.training_and_validation_data, self.training_and_validation_labels),\
         (self.test_data, self.test_labels) = database.load_data()
 
-        # Validation data set - Sub-sample of the training data. We take 5000 samples
-        self.validation_data = self.training_and_validation_data[:5000]
-        self.validation_labels = self.training_and_validation_data[:5000]
+        # Evaluate how many training samples we must keep and slice accordingly
+        nb_samples = ceil(len(self.training_and_validation_data) * slice)
+        nb_validation_samples = ceil(nb_samples * 0.1)
+        self.training_and_validation_data = self.training_and_validation_data[:nb_samples]
+        self.training_and_validation_labels = self.training_and_validation_labels[:nb_samples]
+
+        # Validation data set - Sub-sample of the training data. We take 10% of the training data set
+        self.validation_data = self.training_and_validation_data[:nb_validation_samples]
+        self.validation_labels = self.training_and_validation_data[:nb_validation_samples]
 
         # Training data set - The remaining samples after taking the validation set
-        self.training_data = self.training_and_validation_data[5000:]
-        self.training_labels = self.training_and_validation_labels[5000:]
+        self.training_data = self.training_and_validation_data[nb_validation_samples:]
+        self.training_labels = self.training_and_validation_labels[nb_validation_samples:]
+
+        # Print a cute little message
+        print("Loaded {} training data, {} validation data and {} test data for {}."
+              .format(len(self.training_data),
+                      len(self.validation_data),
+                      len(self.test_data),
+                      "cifar10" if database == cifar10 else "mnist"))
 
     def get_data_set(self, data_set, feature):
         """Return all the data samples for a given data set with the selected features already extracted.
@@ -39,7 +56,7 @@ class Images:
         """
         # Check our input
         assert data_set in ('training', 'validation', 'test')
-        assert feature in 'gray_scale'
+        assert feature in ('gray_scale', 'raw_pixels')
 
         # Choose the good data set
         data = {
@@ -50,7 +67,8 @@ class Images:
 
         # Extract the features
         result = {
-            'gray_scale': self.gray_scale(data)
+            'gray_scale': self.gray_scale(data),
+            'raw_pixels': self.raw_pixels(data)
         }[feature]
 
         return result
@@ -64,11 +82,12 @@ class Images:
         :rtype: list
         """
         # Check our input
-        assert data_set in ('training', 'test')
+        assert data_set in ('training', 'validation', 'test')
 
         # Choose the good dataset
         labels = {
             'training': self.training_labels,
+            'validation': self.validation_labels,
             'test': self.test_labels
         }[data_set]
 
@@ -108,36 +127,35 @@ class Images:
             gs_data.append(new_img)
         return gs_data
 
+    def raw_pixels(self, all_img):
+        gs_data = []
+        for img in all_img:
+            new_img = []
+            for line in img:
+                if isinstance(line[0], np.ndarray):
+                    for RGB in line:
+                        for color_val in RGB:
+                            new_img.append(color_val)
+                else:
+                    for pixel in line:
+                        new_img.append(pixel)
+            gs_data.append(new_img)
+        return gs_data
 
-########################################################################################################################
-#                                             Others
-########################################################################################################################
-def create_confusion_matrix(predicted, real):
-    # TODO : Apparemment que Keras ou ScikitLearn possède une fonction pour ça. Faudrait s'en servir I guess.
-    nb_of_class = len(set(real))
-    matrix = np.zeros((nb_of_class, nb_of_class), dtype=np.int32)
-    for it in range(len(real)):
-        matrix[predicted[it]][real[it]] += 1
-    return matrix
-
-
-def check_accuracy(predicted, real):
-    diff = predicted - real
-    return 100 * (diff == 0).sum() / np.float(len(real))
 
 ########################################################################################################################
 #                                               Main
 ########################################################################################################################
 if __name__ == '__main__':
-    # TODO : Automatiser un peu plus le tout. Là il faut changer plusieurs paramètres et mots manuellement.
-    images = Images(database=mnist)
+    # TODO : Automatiser un peu plus le tout. Là il faut changer plusieurs paramètres et mots manuellement...
+    images = Images(database=cifar10, slice=0.1)
 
     # Get the training data set with its labels
-    X = images.get_data_set(data_set="training", feature="gray_scale")
+    X = images.get_data_set(data_set="training", feature="raw_pixels")
     Y = images.get_labels(data_set="training")
 
     # Get the validation data set with its labels
-    V = images.get_data_set(data_set="validation", feature="gray_scale")
+    V = images.get_data_set(data_set="validation", feature="raw_pixels")
     W = images.get_labels(data_set="validation")
 
     # Get the parameters with Grid Search
@@ -151,19 +169,19 @@ if __name__ == '__main__':
     clf = classifier.fit(X, Y)
 
     # Get the accuracy for the training data set
-    print('Logistic regression training accuracy = ', check_accuracy(clf.predict(X), Y), '%')
+    print('Logistic regression training accuracy = ', clf.score(X, Y) * 100, '%')
 
     # Get the test data set with its labels
-    X = images.get_data_set(data_set="test", feature="gray_scale")
+    X = images.get_data_set(data_set="test", feature="raw_pixels")
     Y = images.get_labels(data_set="test")
 
     # Get the accuracy for the test data set
-    print('Logistic regression test accuracy = ', check_accuracy(clf.predict(X), Y), '%')
+    print('Logistic regression test accuracy = ', clf.score(X, Y) * 100, '%')
 
     # Print a confusion matrix
-    # TODO : Nécessaire?
-    confusion_matrix = create_confusion_matrix(clf.predict(X), Y)
-    print(confusion_matrix)
+    cm = confusion_matrix(Y, clf.predict(X))
+    print(cm)
+
 
 
 
