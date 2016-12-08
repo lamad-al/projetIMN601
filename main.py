@@ -1,27 +1,102 @@
 from keras.datasets import mnist, cifar10
 from sklearn.linear_model import SGDClassifier
+from sklearn.ensemble import AdaBoostClassifier
 from sklearn.metrics import confusion_matrix
 import numpy as np
 from math import ceil
+import abc
+
+
+########################################################################################################################
+#                                               Datasets
+########################################################################################################################
+class Dataset:
+    """Abstract class. Represents a certain data set."""
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def get_dataset(self):
+        """Return the keras.datasets data set."""
+        return
+
+    @abc.abstractmethod
+    def get_name(self):
+        """Return the name (string) of the data set. Mostly for printing and writing in a log."""
+        return
+
+    @abc.abstractmethod
+    def get_dimension(self):
+        """Return the dimension (1D for mnist, 3D for cifar10). Mostly for the feature extraction."""
+        return
+
+
+class Cifar10(Dataset):
+    def get_dimension(self):
+        return 3
+
+    def get_dataset(self):
+        return cifar10
+
+    def get_name(self):
+        return "cifar10"
+
+
+class Mnist(Dataset):
+    def get_dimension(self):
+        return 1
+
+    def get_dataset(self):
+        return mnist
+
+    def get_name(self):
+        return "mnist"
+
+
+########################################################################################################################
+#                                               Classifiers
+########################################################################################################################
+class Classifiers:
+    # TODO : Adding parameters with Grid Search
+    """Abstract class. Represents a certain classifier."""
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def get_classifier(self):
+        """Return the classifier itself (sklearn object) with all the parameters."""
+        return
+
+    @abc.abstractmethod
+    def get_name(self):
+        """Return the name (string) of the classifier. Mostly used for printing or writing in a log."""
+        return
+
+
+class Sigmoid(Classifiers):
+    def get_name(self):
+        return "Logistic Sigmoid"
+
+    def get_classifier(self):
+        return SGDClassifier(loss='log', alpha=0.001, learning_rate='optimal', eta0=1, n_iter=1000)
 
 
 ########################################################################################################################
 #                                                Data
 ########################################################################################################################
 class Images:
-    def __init__(self, database=mnist, slice=1):
+    def __init__(self, Dataset, slice=1):
         """Object used to facilitate the extraction of our data sets and features. Initialize with the database.
 
         :param database: The database we want to work with (mnist or cifar10)
         :param slice: Number between ]0,1] which represents the % of data that we want for training. Default: 100%
         :type slice: float
         """
-        assert database in (mnist, cifar10)
         assert 0 < slice <= 1
+
+        self.dataset = Dataset
 
         # Fetching the data from "keras.datasets"
         (self.training_and_validation_data, self.training_and_validation_labels),\
-        (self.test_data, self.test_labels) = database.load_data()
+        (self.test_data, self.test_labels) = Dataset.get_dataset().load_data()
 
         # Evaluate how many training samples we must keep and slice accordingly
         nb_samples = ceil(len(self.training_and_validation_data) * slice)
@@ -43,7 +118,7 @@ class Images:
               .format(len(self.training_data),
                       len(self.validation_data),
                       len(self.test_data),
-                      "cifar10" if database == cifar10 else "mnist"))
+                      Dataset.get_name()))
 
     def get_data_set(self, data_set, feature):
         """Return all the data samples for a given data set with the selected features already extracted.
@@ -97,11 +172,9 @@ class Images:
         # Transform into a list of integers
         result = []
         for lbl in labels:
-            if isinstance(lbl, np.ndarray):
-                # Cas de cifar10
+            if self.dataset.get_dimension() != 1:
                 result.append(lbl[0])
             else:
-                # Cas de mnist
                 result.append(lbl)
         return result
 
@@ -118,7 +191,7 @@ class Images:
         for img in all_img:
             new_img = []
             for line in img:
-                if isinstance(line[0], np.ndarray):
+                if self.dataset.get_dimension() > 1:
                     for RGB in line:
                         gray_val = 0
                         for color_val in RGB:
@@ -142,7 +215,7 @@ class Images:
         for img in all_img:
             new_img = []
             for line in img:
-                if isinstance(line[0], np.ndarray):
+                if self.dataset.get_dimension() > 1:
                     for RGB in line:
                         for color_val in RGB:
                             new_img.append(color_val)
@@ -158,6 +231,8 @@ class Images:
         :param all_img: A data set returned by "keras.datasets" (3D)
         :return: A list with one list of feature (RGB) for every image.
         """
+        if self.dataset.get_dimension() != 3:
+            raise ValueError
         gs_data = []
         for img in all_img:
             red_channel = []
@@ -175,14 +250,14 @@ class Images:
 #                                               Main
 ########################################################################################################################
 if __name__ == '__main__':
-    # TODO : Automatiser un peu plus le tout. Là il faut changer plusieurs paramètres et mots manuellement...
     # Choose which databases to use for the simulation
-    #db_list = (mnist, cifar10)
-    db_list = (mnist,)
-    #db_list = (cifar10,)
+    datasets = (Mnist(), Cifar10(),)[0:2]
 
-    for db in db_list:
-        images = Images(database=db, slice=0.1)
+    # Choose which classifier to use for the simulation
+    classifiers = (Sigmoid(),)[0:1]
+
+    for dataset in datasets:
+        images = Images(dataset, slice=0.1)
 
         # Get the training data set with its labels
         X = images.get_data_set(data_set="training", feature="raw_pixels")
@@ -192,29 +267,31 @@ if __name__ == '__main__':
         V = images.get_data_set(data_set="validation", feature="raw_pixels")
         W = images.get_labels(data_set="validation")
 
-        # Get the parameters with Grid Search
-        # TODO : Faire une liste des paramètres à trouver et setter
-        # TODO : Implémenter un Grid Search (regarder si Keras en a pas un, ça serait trop nice...)
+        for classifier in classifiers:
+            # Get the parameters with Grid Search
+            # TODO : Faire une liste des paramètres à trouver et setter
+            # TODO : Implémenter un Grid Search (regarder si Keras en a pas un, ça serait trop nice...)
 
-        # Train the classifier
-        # TODO : Ajout d'un autre algorithme et d'un autre feature
-        # TODO : Utiliser nos paramètres trouvés par Grid Search
-        classifier = SGDClassifier(loss='log', alpha=0.001, learning_rate='optimal', eta0=1, n_iter=1000)
-        clf = classifier.fit(X, Y)
+            # Train the classifier
+            # TODO : Ajout d'un autre algorithme et d'un autre feature
+            # TODO : Utiliser nos paramètres trouvés par Grid Search
+            clf = classifier.get_classifier().fit(X, Y)
 
-        # Get the accuracy for the training data set
-        print('Logistic regression training accuracy = ', clf.score(X, Y) * 100, '%')
+            # Get the accuracy for the training data set
+            print(classifier.get_name(), '\'s training accuracy for', dataset.get_name(), '= ',
+                  clf.score(X, Y) * 100, '%')
 
-        # Get the test data set with its labels
-        X = images.get_data_set(data_set="test", feature="raw_pixels")
-        Y = images.get_labels(data_set="test")
+            # Get the test data set with its labels
+            X = images.get_data_set(data_set="test", feature="raw_pixels")
+            Y = images.get_labels(data_set="test")
 
-        # Get the accuracy for the test data set
-        print('Logistic regression test accuracy = ', clf.score(X, Y) * 100, '%')
+            # Get the accuracy for the test data set
+            print(classifier.get_name(), '\'s test accuracy for', dataset.get_name(), '= ',
+                  clf.score(X, Y) * 100, '%')
 
-        # Print a confusion matrix
-        cm = confusion_matrix(Y, clf.predict(X))
-        print(cm)
+            # Print a confusion matrix
+            cm = confusion_matrix(Y, clf.predict(X))
+            print(cm)
 
 
 
