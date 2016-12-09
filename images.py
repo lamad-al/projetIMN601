@@ -25,7 +25,7 @@ class Images:
 
         # Validation data set - Sub-sample of the training data. We take 10% of the training data set
         self.validation_data = self.training_and_validation_data[:nb_validation_samples]
-        self.validation_labels = self.training_and_validation_data[:nb_validation_samples]
+        self.validation_labels = self.training_and_validation_labels[:nb_validation_samples]
 
         # Training data set - The remaining samples after taking the validation set
         self.training_data = self.training_and_validation_data[nb_validation_samples:]
