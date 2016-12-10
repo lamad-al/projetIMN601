@@ -1,6 +1,6 @@
 from images import Images
 from datasets import Mnist, Cifar10
-from classifiers import Sigmoid, Adaboost, check_SGDClassifier
+from classifiers import Sigmoid, Adaboost, check_SGDClassifier, check_lbp
 from sklearn.metrics import confusion_matrix
 
 
@@ -13,12 +13,12 @@ def img_classification():
     classifiers = (Sigmoid(), Adaboost(),)[0:1]
 
     # Choose which features to use
-    features = ["raw_pixels", "gray_scale"][0:1]
+    features = ["raw_pixels", "lbp", "gray_scale"][1:2]
 
     for dataset in datasets:
         for feature in features:
             for classifier in classifiers:
-                images = Images(dataset, slice=1)
+                images = Images(dataset, slice=0.1)
                 # Get the training data set with its labels
                 X = images.get_data_set(data_set="training", feature=feature)
                 Y = images.get_labels(data_set="training")
@@ -50,31 +50,34 @@ def img_classification():
 def execute_grid_search():
     """Execute a grid search. Is separated from the main algorithm because it was just too long to execute."""
     # Choose which databases to use
-    datasets = (Mnist(), Cifar10(),)[0:2]
+    datasets = (Mnist(), Cifar10(),)[0:1]
 
     # Choose which features to use
-    features = ["raw_pixels", "gray_scale"][0:1]
+    features = ["raw_pixels", "lbp"][1:2]
 
     for dataset in datasets:
         for feature in features:
-            images = Images(dataset, slice=0.1)
-            # Get the training data set with its labels
-            X = images.get_data_set(data_set="training", feature=feature)
-            Y = images.get_labels(data_set="training")
+            for p in [1, 2, 4, 8, 16, 32]:
+                for r in [0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 50]:
+                    images = Images(dataset, slice=0.1, p=p, r=r)
+                    # Get the training data set with its labels
+                    X = images.get_data_set(data_set="training", feature=feature)
+                    Y = images.get_labels(data_set="training")
 
-            # Get the validation data set with its labels
-            V = images.get_data_set(data_set="validation", feature=feature)
-            W = images.get_labels(data_set="validation")
+                    # Get the validation data set with its labels
+                    V = images.get_data_set(data_set="validation", feature=feature)
+                    W = images.get_labels(data_set="validation")
 
-            # Choose which grid search to execute
-            check_SGDClassifier(X, Y, V, W)
+                    # Choose which grid search to execute
+                    #check_SGDClassifier(X, Y, V, W)
+                    check_lbp(X, Y, V, W, p, r)
 
 ########################################################################################################################
 #                                               Main
 ########################################################################################################################
 if __name__ == '__main__':
     # Choose if we want to execute a grid search or the main algorithm
-    grid_search = False
+    grid_search = True
 
     if grid_search:
         execute_grid_search()
