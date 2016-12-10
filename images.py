@@ -1,4 +1,6 @@
 from math import ceil
+from skimage.color import rgb2grey
+from skimage.feature import local_binary_pattern, hog
 
 
 class Images:
@@ -51,7 +53,7 @@ class Images:
         """
         # Check our input
         assert data_set in ('training', 'validation', 'test')
-        assert feature in ('gray_scale', 'raw_pixels', 'rgb')
+        assert feature in ('gray_scale', 'raw_pixels', 'lbp', 'hog', 'none')
 
         # Choose the good data set
         data = {
@@ -60,11 +62,15 @@ class Images:
             'test': self.test_data
         }[data_set]
 
+        if feature is None:
+            return data
+
         # Extract the features
         function = {
             'gray_scale': self.gray_scale,
             'raw_pixels': self.raw_pixels,
-            'rgb': self.rgb
+            'lbp': self.local_binary_patterns,
+            'hog': self.hog
         }[feature]
         result = function(data)
 
@@ -107,19 +113,21 @@ class Images:
         :return: A list with one list of feature (gray scale) for every image.
         """
         gs_data = []
-        for img in all_img:
-            new_img = []
-            for line in img:
-                if self.dataset.get_dimension() > 1:
-                    for RGB in line:
-                        gray_val = 0
-                        for color_val in RGB:
-                            gray_val += color_val
-                        new_img.append(gray_val/len(RGB))
-                else:
+        if self.dataset.get_dimension() == 1:
+            for img in all_img:
+                new_img = []
+                for line in img:
                     for pixel in line:
                         new_img.append(pixel)
-            gs_data.append(new_img)
+                gs_data.append(new_img)
+        else:
+            for img in all_img:
+                new_img = []
+                conversion = rgb2grey(img)
+                for line in conversion:
+                    for pixel in line:
+                        new_img.append(pixel)
+                gs_data.append(new_img)
         return gs_data
 
     def raw_pixels(self, all_img):
@@ -144,23 +152,32 @@ class Images:
             gs_data.append(new_img)
         return gs_data
 
-    def rgb(self, all_img):
-        """Only for 3D images. Each image is represented by its red channel, then green channel, and its blue at the end.
+    def rgb_splitter(self, img):
+        new_img = []
+        for line in img:
+            new_line = []
+            for RGB in line:
+                for pixel in RGB:
+                    new_line.append(pixel)
+            new_img.append(new_line)
+        return new_img
 
-        :param all_img: A data set returned by "keras.datasets" (3D)
-        :return: A list with one list of feature (RGB) for every image.
-        """
-        if self.dataset.get_dimension() != 3:
-            raise ValueError
-        gs_data = []
+    def local_binary_patterns(self, all_img):
+        lbp_data = []
         for img in all_img:
-            red_channel = []
-            green_channel = []
-            blue_channel = []
-            for line in img:
-                for RGB in line:
-                    red_channel.append(RGB[0])
-                    green_channel.append(RGB[1])
-                    blue_channel.append(RGB[2])
-            gs_data.append(red_channel + green_channel + blue_channel)
-        return gs_data
+            if self.dataset.get_dimension() > 1:
+                img = self.rgb_splitter(img)
+            new_img = []
+            for line in local_binary_pattern(img, P=8, R=10, method='uniform'):
+                for pixel in line:
+                    new_img.append(pixel)
+            lbp_data.append(new_img)
+        return lbp_data
+
+    def hog(self, all_img):
+        hog_data = []
+        for img in all_img:
+            if self.dataset.get_dimension() > 1:
+                img = self.rgb_splitter(img)
+            hog_data.append(hog(img, feature_vector=True))
+        return hog_data

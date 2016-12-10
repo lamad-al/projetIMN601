@@ -2,7 +2,6 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.ensemble import AdaBoostClassifier
 import abc
 
-
 class Classifiers:
     """Abstract class. Represents a certain classifier."""
     __metaclass__ = abc.ABCMeta
@@ -34,7 +33,7 @@ class Adaboost(Classifiers):
 
     def get_classifier(self):
         return AdaBoostClassifier(base_estimator=Sigmoid().get_classifier(),
-                                  algorithm='SAMME', learning_rate=0.01, n_estimators=50)
+                                  algorithm='SAMME')
 
 
 ########################################################################################################################
@@ -97,4 +96,9 @@ def check_SGDClassifier(X, Y, V, W):
                     print("{};{};{};{};{}"
                           .format(alpha, eta0, n_iter, power_t, accuracy))
     print("Best accuracy was : ", best_accuracy, "%")
+
+
+def check_lbp(X, Y, V, W, p, r):
+    clf = Sigmoid().get_classifier().fit(X, Y)
+    print("{};{};{}".format(p, r, clf.score(V, W) * 100))
 
