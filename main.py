@@ -10,10 +10,10 @@ def img_classification():
     datasets = (Mnist(), Cifar10(),)[0:2]
 
     # Choose which classifiers to use
-    classifiers = (Sigmoid(), Adaboost(),)[0:1]
+    classifiers = (Sigmoid(), Adaboost(),)[0:2]
 
     # Choose which features to use
-    features = ["raw_pixels", "lbp", "gray_scale"][1:2]
+    features = ["raw_pixels", "hog", "lbp", "gray_scale"][0:2]
 
     for dataset in datasets:
         for feature in features:

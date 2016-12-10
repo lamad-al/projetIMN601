@@ -33,7 +33,7 @@ class Adaboost(Classifiers):
 
     def get_classifier(self):
         return AdaBoostClassifier(base_estimator=Sigmoid().get_classifier(),
-                                  algorithm='SAMME', learning_rate=0.01, n_estimators=50)
+                                  algorithm='SAMME')
 
 
 ########################################################################################################################

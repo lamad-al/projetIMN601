@@ -1,7 +1,6 @@
 from math import ceil
-from mahotas.colors import rgb2grey
-from mahotas.features.lbp import lbp, lbp_transform
-from skimage.feature import local_binary_pattern
+from skimage.color import rgb2grey
+from skimage.feature import local_binary_pattern, hog
 
 
 class Images:
@@ -54,7 +53,7 @@ class Images:
         """
         # Check our input
         assert data_set in ('training', 'validation', 'test')
-        assert feature in ('gray_scale', 'raw_pixels', 'lbp', 'none')
+        assert feature in ('gray_scale', 'raw_pixels', 'lbp', 'hog', 'none')
 
         # Choose the good data set
         data = {
@@ -70,7 +69,8 @@ class Images:
         function = {
             'gray_scale': self.gray_scale,
             'raw_pixels': self.raw_pixels,
-            'lbp': self.local_binary_patterns
+            'lbp': self.local_binary_patterns,
+            'hog': self.hog
         }[feature]
         result = function(data)
 
@@ -173,3 +173,11 @@ class Images:
                     new_img.append(pixel)
             lbp_data.append(new_img)
         return lbp_data
+
+    def hog(self, all_img):
+        hog_data = []
+        for img in all_img:
+            if self.dataset.get_dimension() > 1:
+                img = self.rgb_splitter(img)
+            hog_data.append(hog(img, feature_vector=True))
+        return hog_data
