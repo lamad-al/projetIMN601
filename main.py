@@ -57,27 +57,25 @@ def execute_grid_search():
 
     for dataset in datasets:
         for feature in features:
-            for p in [1, 2, 4, 8, 16, 32]:
-                for r in [0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 50]:
-                    images = Images(dataset, slice=0.1, p=p, r=r)
-                    # Get the training data set with its labels
-                    X = images.get_data_set(data_set="training", feature=feature)
-                    Y = images.get_labels(data_set="training")
+            images = Images(dataset, slice=0.1)
+            # Get the training data set with its labels
+            X = images.get_data_set(data_set="training", feature=feature)
+            Y = images.get_labels(data_set="training")
 
-                    # Get the validation data set with its labels
-                    V = images.get_data_set(data_set="validation", feature=feature)
-                    W = images.get_labels(data_set="validation")
+            # Get the validation data set with its labels
+            V = images.get_data_set(data_set="validation", feature=feature)
+            W = images.get_labels(data_set="validation")
 
-                    # Choose which grid search to execute
-                    #check_SGDClassifier(X, Y, V, W)
-                    check_lbp(X, Y, V, W, p, r)
+            # Choose which grid search to execute
+            check_SGDClassifier(X, Y, V, W)
+            #check_lbp(X, Y, V, W, p, r)
 
 ########################################################################################################################
 #                                               Main
 ########################################################################################################################
 if __name__ == '__main__':
     # Choose if we want to execute a grid search or the main algorithm
-    grid_search = True
+    grid_search = False
 
     if grid_search:
         execute_grid_search()

@@ -1,10 +1,11 @@
 from math import ceil
 from mahotas.colors import rgb2grey
 from mahotas.features.lbp import lbp, lbp_transform
+from skimage.feature import local_binary_pattern
 
 
 class Images:
-    def __init__(self, Dataset, slice=1, p=None, r=None):
+    def __init__(self, Dataset, slice=1):
         """Object used to facilitate the extraction of our data sets and features. Initialize with the database.
 
         :param database: The database we want to work with (mnist or cifar10)
@@ -14,10 +15,6 @@ class Images:
         assert 0 < slice <= 1
 
         self.dataset = Dataset
-
-        # TODO : ONLY FOR TESTING
-        self.p = p
-        self.r = r
 
         # Fetching the data from "keras.datasets"
         (self.training_and_validation_data, self.training_and_validation_labels),\
@@ -39,11 +36,11 @@ class Images:
 
         # Print a cute little message
         # TODO : Faire en sorte de pouvoir afficher plusieurs noms si on ajoute des db
-        #print("Loaded {} training data, {} validation data and {} test data for {}."
-        #      .format(len(self.training_data),
-        #              len(self.validation_data),
-        #              len(self.test_data),
-        #              Dataset.get_name()))
+        print("Loaded {} training data, {} validation data and {} test data for {}."
+              .format(len(self.training_data),
+                      len(self.validation_data),
+                      len(self.test_data),
+                      Dataset.get_name()))
 
     def get_data_set(self, data_set, feature):
         """Return all the data samples for a given data set with the selected features already extracted.
@@ -57,7 +54,7 @@ class Images:
         """
         # Check our input
         assert data_set in ('training', 'validation', 'test')
-        assert feature in ('gray_scale', 'raw_pixels', 'lbp')
+        assert feature in ('gray_scale', 'raw_pixels', 'lbp', 'none')
 
         # Choose the good data set
         data = {
@@ -65,6 +62,9 @@ class Images:
             'validation': self.validation_data,
             'test': self.test_data
         }[data_set]
+
+        if feature is None:
+            return data
 
         # Extract the features
         function = {
@@ -156,16 +156,9 @@ class Images:
         new_img = []
         for line in img:
             new_line = []
-            #red = []
-            #green = []
-            #blue = []
             for RGB in line:
                 for pixel in RGB:
                     new_line.append(pixel)
-                #red.append(RGB[0])
-                #green.append(RGB[1])
-                #blue.append(RGB[2])
-            #new_img.append(red + green + blue)
             new_img.append(new_line)
         return new_img
 
@@ -175,7 +168,7 @@ class Images:
             if self.dataset.get_dimension() > 1:
                 img = self.rgb_splitter(img)
             new_img = []
-            for line in lbp_transform(img, points=self.p, radius=self.r):
+            for line in local_binary_pattern(img, P=8, R=10, method='uniform'):
                 for pixel in line:
                     new_img.append(pixel)
             lbp_data.append(new_img)
