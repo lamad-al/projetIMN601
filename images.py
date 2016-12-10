@@ -62,7 +62,7 @@ class Images:
             'test': self.test_data
         }[data_set]
 
-        if feature is None:
+        if feature is 'none':
             return data
 
         # Extract the features

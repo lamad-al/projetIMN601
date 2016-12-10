@@ -1,6 +1,6 @@
 from images import Images
 from datasets import Mnist, Cifar10
-from classifiers import Sigmoid, Adaboost, check_SGDClassifier, check_lbp
+from classifiers import Sigmoid, Adaboost, check_SGDClassifier, check_Adaboost
 from sklearn.metrics import confusion_matrix
 
 
@@ -10,7 +10,7 @@ def img_classification():
     datasets = (Mnist(), Cifar10(),)[0:2]
 
     # Choose which classifiers to use
-    classifiers = (Sigmoid(), Adaboost(),)[0:2]
+    classifiers = (Sigmoid(), Adaboost(),)[1:2]
 
     # Choose which features to use
     features = ["raw_pixels", "hog", "lbp", "gray_scale"][0:2]
@@ -24,23 +24,18 @@ def img_classification():
                 Y = images.get_labels(data_set="training")
 
                 # Train the classifier
-                # TODO : Ajout d'un autre feature
+                print("Training {} --- {}".format(dataset.get_name(), feature.get_name()))
                 clf = classifier.get_classifier().fit(X, Y)
 
                 # Get the accuracy for the training data set
-                # TODO : Le message est horrible... Le rendre beau svp
-                print(classifier.get_name(), '\'s training accuracy for', dataset.get_name(),
-                      'with', feature, 'for feature = ',
-                      clf.score(X, Y) * 100, '%')
+                print("Training Accuracy: {}%".format(clf.score(X, Y) * 100))
 
                 # Get the test data set with its labels
                 X = images.get_data_set(data_set="test", feature=feature)
                 Y = images.get_labels(data_set="test")
 
                 # Get the accuracy for the test data set
-                print(classifier.get_name(), '\'s test accuracy for', dataset.get_name(),
-                      'with', feature, 'for feature = ',
-                      clf.score(X, Y) * 100, '%')
+                print("Test Accuracy: {}%".format(clf.score(X, Y) * 100))
 
                 # Print a confusion matrix
                 cm = confusion_matrix(Y, clf.predict(X))

@@ -1,4 +1,4 @@
-from sklearn.linear_model import SGDClassifier
+from sklearn.linear_model import SGDClassifier, LogisticRegression
 from sklearn.ensemble import AdaBoostClassifier
 import abc
 
@@ -22,8 +22,9 @@ class Sigmoid(Classifiers):
         return "Logistic Sigmoid"
 
     def get_classifier(self):
-        return SGDClassifier(loss='log', alpha=0.0001, learning_rate='invscaling', eta0=1, n_iter=5, power_t=0.5,
-                             n_jobs=-1)
+        #return SGDClassifier(loss='log', alpha=0.0001, learning_rate='invscaling', eta0=1, n_iter=5, power_t=0.5,
+        #                    n_jobs=-1, class_weight='balanced')
+        return LogisticRegression(n_jobs=-1, solver='lbfgs', class_weight='balanced', multi_class='multinomial')
 
 
 class Adaboost(Classifiers):
@@ -32,8 +33,7 @@ class Adaboost(Classifiers):
         return "Adaboost"
 
     def get_classifier(self):
-        return AdaBoostClassifier(base_estimator=Sigmoid().get_classifier(),
-                                  algorithm='SAMME')
+        return AdaBoostClassifier(base_estimator=Sigmoid().get_classifier(), algorithm='SAMME.R')
 
 
 ########################################################################################################################
@@ -98,7 +98,8 @@ def check_SGDClassifier(X, Y, V, W):
     print("Best accuracy was : ", best_accuracy, "%")
 
 
-def check_lbp(X, Y, V, W, p, r):
+def check_Adaboost(X, Y, V, W):
+    print("Grid Search for Adaboost")
     clf = Sigmoid().get_classifier().fit(X, Y)
     print("{};{};{}".format(p, r, clf.score(V, W) * 100))
 
