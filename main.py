@@ -13,7 +13,7 @@ def img_classification():
     datasets = (Mnist(), Cifar10(),)[0:2]
 
     # Choose which classifiers to use
-    classifiers = (Sigmoid(), Adaboost(),)[1:2]
+    classifiers = (Sigmoid, Adaboost,)[0:2]
 
     # Choose which features to use
     features = ["raw_pixels", "hog", "lbp", "gray_scale"][0:2]
@@ -21,6 +21,7 @@ def img_classification():
     for dataset in datasets:
         for feature in features:
             for classifier in classifiers:
+                classifier = classifier(dataset)
                 images = Images(dataset, slice=0.1)
                 # Get the training data set with its labels
                 X = images.get_data_set(data_set="training", feature=feature)
@@ -75,7 +76,7 @@ def execute_grid_search():
 ########################################################################################################################
 if __name__ == '__main__':
     # Choose if we want to execute a grid search or the main algorithm
-    grid_search = True
+    grid_search = False
 
     if grid_search:
         execute_grid_search()

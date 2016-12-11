@@ -1,10 +1,14 @@
 from sklearn.linear_model import SGDClassifier, LogisticRegression
-from sklearn.ensemble import AdaBoostClassifier, AdaBoostRegressor
+from sklearn.ensemble import AdaBoostClassifier
 import abc
+
 
 class Classifiers:
     """Abstract class. Represents a certain classifier."""
     __metaclass__ = abc.ABCMeta
+
+    def __init__(self, dataset):
+        self.dataset = dataset
 
     @abc.abstractmethod
     def get_classifier(self):
@@ -31,10 +35,13 @@ class Adaboost(Classifiers):
         return "Adaboost"
 
     def get_classifier(self):
-        weak_classifier = SGDClassifier(loss='log', alpha=0.0001, learning_rate='invscaling', eta0=1, n_iter=5,
-                                        power_t=0.5, n_jobs=-1)
-        #weak_classifier = LogisticRegression(n_jobs=-1)
-        return AdaBoostClassifier(weak_classifier, algorithm="SAMME")
+        #weak_classifier = SGDClassifier(loss='log', alpha=0.0001, learning_rate='invscaling', eta0=1, n_iter=5,
+        #                                power_t=0.5, n_jobs=-1)
+        weak_classifier = LogisticRegression(n_jobs=-1)
+        if self.dataset.get_name is "mnist":
+            return AdaBoostClassifier(weak_classifier, algorithm="SAMME.R", n_estimators=75, learning_rate=0.000001)
+        else:
+            return AdaBoostClassifier(weak_classifier, algorithm="SAMME.R", n_estimators=500, learning_rate=0.5)
 
 
 ########################################################################################################################
