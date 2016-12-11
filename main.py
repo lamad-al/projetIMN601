@@ -19,7 +19,7 @@ def img_classification():
         for feature in features:
             for classifier in classifiers:
                 classifier = classifier(dataset)
-                images = Images(dataset, slice=0.1)
+                images = Images(dataset, slice=1)
                 # Get the training data set with its labels
                 X = images.get_data_set(data_set="training", feature=feature)
                 Y = images.get_labels(data_set="training")

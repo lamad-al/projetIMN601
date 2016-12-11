@@ -8,7 +8,7 @@ class Images:
         """Object used to facilitate the extraction of our data sets and features. Initialize with the database.
 
         :param database: The database we want to work with (mnist or cifar10)
-        :param slice: Number between ]0,1] which represents the % of data that we want for training. Default: 100%
+        :param slice: Number between ]0,1] which represents the % of data that we want for training. Default: 1
         :type slice: float
         """
         assert 0 < slice <= 1
@@ -34,7 +34,6 @@ class Images:
         self.training_labels = self.training_and_validation_labels[nb_validation_samples:]
 
         # Print a cute little message
-        # TODO : Faire en sorte de pouvoir afficher plusieurs noms si on ajoute des db
         print("Loaded {} training data, {} validation data and {} test data for {}."
               .format(len(self.training_data),
                       len(self.validation_data),
@@ -46,7 +45,7 @@ class Images:
 
         :param data_set: The type of data set ('training', 'validation' or 'test')
         :type data_set: str
-        :param feature: The type of feature to extract ('gray_scale', 'raw_pixels', 'rgb')
+        :param feature: The type of feature to extract ('gray_scale', 'raw_pixels', 'lbp', 'hog', 'none')
         :type feature: str
         :return: A list with one list of feature for every image in the data set
         :rtype: list
@@ -153,6 +152,13 @@ class Images:
         return gs_data
 
     def rgb_splitter(self, img):
+        """Split a 3D image into a list of RGB for every pixel.
+
+        :param img: The 3D image
+        :type img: list
+        :return: All the pixels lined up into a list
+        :rtype: list
+        """
         new_img = []
         for line in img:
             new_line = []
@@ -163,6 +169,11 @@ class Images:
         return new_img
 
     def local_binary_patterns(self, all_img):
+        """Execute a Local Binary Patterns and return a list of the features.
+
+        :param all_img: A data set returned by "keras.datasets"
+        :return: A list with one list of feature (lbp) for every image.
+        """
         lbp_data = []
         for img in all_img:
             if self.dataset.get_dimension() > 1:
@@ -175,6 +186,11 @@ class Images:
         return lbp_data
 
     def hog(self, all_img):
+        """Execute a HoG and return a list of the features.
+
+        :param all_img: A data set returned by "keras.datasets"
+        :return: A list with one list of feature (HoG) for every image.
+        """
         hog_data = []
         for img in all_img:
             if self.dataset.get_dimension() > 1:
