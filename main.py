@@ -2,13 +2,10 @@ from images import Images
 from datasets import Mnist, Cifar10
 from classifiers import Sigmoid, Adaboost, check_SGDClassifier, check_Adaboost
 from sklearn.metrics import confusion_matrix
-import warnings
 
 
 def img_classification():
     """Main algorithm"""
-    warnings.filterwarnings("ignore")
-
     # Choose which databases to use
     datasets = (Mnist(), Cifar10(),)[0:2]
 
