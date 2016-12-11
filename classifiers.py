@@ -1,10 +1,14 @@
-from sklearn.linear_model import SGDClassifier
+from sklearn.linear_model import SGDClassifier, LogisticRegression
 from sklearn.ensemble import AdaBoostClassifier
 import abc
+
 
 class Classifiers:
     """Abstract class. Represents a certain classifier."""
     __metaclass__ = abc.ABCMeta
+
+    def __init__(self, dataset):
+        self.dataset = dataset
 
     @abc.abstractmethod
     def get_classifier(self):
@@ -22,8 +26,7 @@ class Sigmoid(Classifiers):
         return "Logistic Sigmoid"
 
     def get_classifier(self):
-        return SGDClassifier(loss='log', alpha=0.0001, learning_rate='invscaling', eta0=1, n_iter=5, power_t=0.5,
-                             n_jobs=-1)
+        return LogisticRegression(n_jobs=-1, solver='sag', multi_class='multinomial')
 
 
 class Adaboost(Classifiers):
@@ -32,8 +35,13 @@ class Adaboost(Classifiers):
         return "Adaboost"
 
     def get_classifier(self):
-        return AdaBoostClassifier(base_estimator=Sigmoid().get_classifier(),
-                                  algorithm='SAMME')
+        #weak_classifier = SGDClassifier(loss='log', alpha=0.0001, learning_rate='invscaling', eta0=1, n_iter=5,
+        #                                power_t=0.5, n_jobs=-1)
+        weak_classifier = LogisticRegression(n_jobs=-1)
+        if self.dataset.get_name is "mnist":
+            return AdaBoostClassifier(weak_classifier, algorithm="SAMME.R", n_estimators=75, learning_rate=0.000001)
+        else:
+            return AdaBoostClassifier(weak_classifier, algorithm="SAMME.R", n_estimators=500, learning_rate=0.5)
 
 
 ########################################################################################################################
@@ -98,7 +106,14 @@ def check_SGDClassifier(X, Y, V, W):
     print("Best accuracy was : ", best_accuracy, "%")
 
 
-def check_lbp(X, Y, V, W, p, r):
-    clf = Sigmoid().get_classifier().fit(X, Y)
-    print("{};{};{}".format(p, r, clf.score(V, W) * 100))
+def check_Adaboost(X, Y, V, W):
+    print("Grid Search for Adaboost")
+    for n_estimators in [1, 5, 10, 25, 50, 75, 100, 500, 1000]:
+        for learning_rate in [0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 0.5, 1]:
+            weak_classifier = SGDClassifier(loss='log', alpha=0.0001, learning_rate='invscaling', eta0=1, n_iter=5,
+                                            power_t=0.5, n_jobs=-1)
+            clf = AdaBoostClassifier(base_estimator=weak_classifier, algorithm='SAMME',
+                                     n_estimators=n_estimators, learning_rate=learning_rate)
+            clf.fit(X, Y)
+            print("{};{};{}".format(n_estimators, learning_rate, clf.score(V, W) * 100))
 
