@@ -36,11 +36,11 @@ y_labels = images.get_labels(data_set="training")
 
 # Test set
 X_test = images.get_data_set(data_set="test", feature='none')
-y_LabelsTest = images.get_labels(data_set="test")
+y_test_labels = images.get_labels(data_set="test")
 
 # Validation set
 X_validation = images.get_data_set(data_set='validation', feature='none')
-y_validationLabel = images.get_labels(data_set='validation')
+y_validation_labels = images.get_labels(data_set='validation')
 
 # Reduce memory usage by limiting the pixel value to 32 bits
 X_training = X_training.astype('float32')
@@ -71,8 +71,8 @@ print(X_test.shape[0], 'test samples')
 
 # Convert class vectors to binary class matrices
 Y_labels = np_utils.to_categorical(y_labels, nb_classes)
-Y_LabelsTest = np_utils.to_categorical(y_LabelsTest, nb_classes)
-Y_validationLabel = np_utils.to_categorical(y_validationLabel, nb_classes)
+Y_test_labels = np_utils.to_categorical(y_test_labels, nb_classes)
+Y_validation_labels = np_utils.to_categorical(y_validation_labels, nb_classes)
 
 
 # Convolution Network2D
@@ -101,15 +101,14 @@ model.add(Dropout(0.5))
 model.add(Dense(nb_classes))
 model.add(Activation('softmax'))
 
-ada = Adadelta(rate, rho=0.95, epsilon=1e-08)
+ada = Adadelta(1.0, rho=0.95, epsilon=1e-08)
 
 model.compile(loss='categorical_crossentropy',
               optimizer=ada,
               metrics=['accuracy'])
 
 model.fit(X_training, Y_labels, batch_size=batch_size, nb_epoch=nb_epoch,
-          verbose=2, validation_data=(X_validation, Y_validationLabel))
-score = model.evaluate(X_test, Y_LabelsTest, verbose=1)
+          verbose=2, validation_data=(X_validation, Y_validation_labels))
+score = model.evaluate(X_test, Y_test_labels, verbose=1)
 print('Test score:', score[0])
 print('Test accuracy():', score[1])
-print('Rate: :', rate)
