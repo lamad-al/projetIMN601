@@ -30,18 +30,16 @@ class Sigmoid(Classifiers):
 
 
 class Adaboost(Classifiers):
-    # TODO : Adding parameters with Grid Search
     def get_name(self):
         return "Adaboost"
 
     def get_classifier(self):
-        #weak_classifier = SGDClassifier(loss='log', alpha=0.0001, learning_rate='invscaling', eta0=1, n_iter=5,
-        #                                power_t=0.5, n_jobs=-1)
-        weak_classifier = LogisticRegression(n_jobs=-1)
+        weak_classifier = SGDClassifier(loss='log', alpha=0.0001, learning_rate='invscaling', eta0=1, n_iter=5,
+                                        power_t=0.5, n_jobs=-1)
         if self.dataset.get_name is "mnist":
-            return AdaBoostClassifier(weak_classifier, algorithm="SAMME.R", n_estimators=75, learning_rate=0.000001)
+            return AdaBoostClassifier(weak_classifier, algorithm="SAMME", n_estimators=75, learning_rate=0.000001)
         else:
-            return AdaBoostClassifier(weak_classifier, algorithm="SAMME.R", n_estimators=500, learning_rate=0.5)
+            return AdaBoostClassifier(weak_classifier, algorithm="SAMME", n_estimators=500, learning_rate=0.5)
 
 
 ########################################################################################################################
@@ -107,6 +105,17 @@ def check_SGDClassifier(X, Y, V, W):
 
 
 def check_Adaboost(X, Y, V, W):
+    """Execute a grid search for Adaboost with a Logistic Sigmoid classifier.
+
+    The results are printed such as we can copy them into a spreadsheet.
+    n_estimators ; learning_rate ; accuracy (%)
+
+    :param X: A training data set with the features already extracted.
+    :param Y: The labels (real classes) of the training data set.
+    :param V: A validation data set with the features already extracted.
+    :param W: The labels (real classes) of the validation data set.
+    :return: Nothing. Print the information on the output.
+    """
     print("Grid Search for Adaboost")
     for n_estimators in [1, 5, 10, 25, 50, 75, 100, 500, 1000]:
         for learning_rate in [0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 0.5, 1]:
