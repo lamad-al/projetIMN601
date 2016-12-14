@@ -7,7 +7,7 @@ from sklearn.metrics import confusion_matrix
 def img_classification():
     """Main algorithm"""
     # Choose which databases to use
-    datasets = (Mnist(), Cifar10(),)[0:2]
+    datasets = (Mnist(), Cifar10(),)[0:1]
 
     # Choose which classifiers to use
     classifiers = (Sigmoid, Adaboost,)[0:2]
