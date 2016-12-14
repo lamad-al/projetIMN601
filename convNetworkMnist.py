@@ -1,3 +1,5 @@
+'''Train a simple deep CNN on the Mnist small images dataset.
+'''
 from __future__ import print_function
 from images import Images
 from datasets import Mnist

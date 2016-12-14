@@ -1,3 +1,5 @@
+'''Train a simple NN on the Mnist small images dataset.
+'''
 from __future__ import print_function
 from images import Images
 from datasets import Mnist
@@ -11,7 +13,7 @@ import numpy as np
 np.random.seed(1337)  # for reproducibility
 
 # Choose how much of the dataset you want to use
-images = Images(Mnist(), slice=1)
+images = Images(Mnist(), slice=0.1)
 
 #Set parameters
 batch_size = 128
@@ -29,11 +31,16 @@ y_labels = images.get_labels(data_set="training")
 
 # Test set
 X_test = images.get_data_set(data_set="test", feature='none')
-y_labels_test = images.get_labels(data_set="test")
+y_test_labels = images.get_labels(data_set="test")
 
 # Validation set
 X_validation = images.get_data_set(data_set='validation', feature='none')
-y_validation_label = images.get_labels(data_set='validation')
+y_validation_labels = images.get_labels(data_set='validation')
+
+# Convert class vectors to binary class matrices
+Y_labels = np_utils.to_categorical(y_labels, nb_classes)
+Y_test_labels = np_utils.to_categorical(y_test_labels, nb_classes)
+Y_validation_label = np_utils.to_categorical(y_validation_labels, nb_classes)
 
 # Reduce memory usage by limiting the pixel value to 32 bits
 X_training = X_training.astype('float32')
@@ -45,31 +52,22 @@ X_training /= 255
 X_test /= 255
 X_validation /= 255
 
-# Make sure the image is ordered correctly if the backend is not theano
-if Kback.image_dim_ordering() == 'th':
-    X_training = X_training.reshape(X_training.shape[0], img_cols * img_rows)
-    X_test = X_test.reshape(X_test.shape[0], img_cols * img_rows)
-    X_validation = X_validation.reshape(X_validation.shape[0], img_cols * img_rows)
-    input_shape = (1, img_rows, img_cols)
-else:
-    X_training = X_training.reshape(X_training.shape[0], img_rows, img_cols, 1)
-    X_test = X_test.reshape(X_test.shape[0], img_rows, img_cols, 1)
-    X_validation = X_validation.reshape(X_validation.shape[0], img_rows, img_cols, 1)
-    input_shape = (img_rows, img_cols, 1)
+# Reshape the data
+X_training = X_training.reshape(X_training.shape[0], img_cols * img_rows)
+X_test = X_test.reshape(X_test.shape[0], img_cols * img_rows)
+X_validation = X_validation.reshape(X_validation.shape[0], img_cols * img_rows)
+input_dim = img_rows * img_cols
 
-# Convert class vectors to binary class matrices
-Y_labels = np_utils.to_categorical(y_labels, nb_classes)
-Y_labels_test = np_utils.to_categorical(y_labels_test, nb_classes)
-Y_validation_label = np_utils.to_categorical(y_validation_label, nb_classes)
+print('X_training shape:', X_training.shape)
+print(X_training.shape[0], 'train samples')
+print(X_test.shape[0], 'test samples')
 
-
-# Convolution Network2D
+# Build network
 model = Sequential()
-model.add(Dense(nb_filters, input_dim=img_cols * img_rows))
+model.add(Dense(nb_filters, input_dim=input_dim))
 
 # Hidden layers
 for x in range(0, 4):
-    # Layer
     model.add(Dense(nb_filters, activation='relu'))
     model.add(Dropout(0.25))
 
@@ -79,16 +77,14 @@ model.add(Dropout(0.5))
 model.add(Dense(nb_classes))
 model.add(Activation('softmax'))
 
-# Classifier
-sgd= SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
-
+#set the optimizer
+sgd= SGD(lr=0.001, decay=1e-6, momentum=0.9, nesterov=True)
 model.compile(loss='categorical_crossentropy',
                   optimizer=sgd,
                   metrics=['accuracy'])
 
-# Training
 model.fit(X_training, Y_labels, batch_size=batch_size, nb_epoch=nb_epoch,
           verbose=2, validation_data=(X_validation, Y_validation_label))
-score = model.evaluate(X_test, Y_labels_test, verbose=1)
+score = model.evaluate(X_test, Y_test_labels, verbose=1)
 print('Test score:', score[0])
 print('Test accuracy():', score[1])
