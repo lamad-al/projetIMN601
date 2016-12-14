@@ -1,3 +1,5 @@
+'''Train a simple NN on the Mnist small images dataset.
+'''
 from __future__ import print_function
 from images import Images
 from datasets import Mnist
@@ -11,7 +13,7 @@ import numpy as np
 np.random.seed(1337)  # for reproducibility
 
 # Choose how much of the dataset you want to use
-images = Images(Mnist(), slice=1)
+images = Images(Mnist(), slice=0.1)
 
 #Set parameters
 batch_size = 128
@@ -66,7 +68,6 @@ model.add(Dense(nb_filters, input_dim=input_dim))
 
 # Hidden layers
 for x in range(0, 4):
-    # Layer
     model.add(Dense(nb_filters, activation='relu'))
     model.add(Dropout(0.25))
 
@@ -77,7 +78,7 @@ model.add(Dense(nb_classes))
 model.add(Activation('softmax'))
 
 #set the optimizer
-sgd= SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
+sgd= SGD(lr=0.001, decay=1e-6, momentum=0.9, nesterov=True)
 model.compile(loss='categorical_crossentropy',
                   optimizer=sgd,
                   metrics=['accuracy'])

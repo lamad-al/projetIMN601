@@ -1,8 +1,5 @@
-# -*- coding: utf-8 -*-
-"""
-@author: lama2005
-"""
-
+'''Train a simple NN on the CIFAR10 small images dataset.
+'''
 from __future__ import print_function
 from datasets import Cifar10
 from images import Images
